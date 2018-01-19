@@ -1,5 +1,5 @@
 {
-  "name": "quadrant",
+  "name": "quadrat",
   "version": "1.0.0",
   "description": "A Vue.js project",
   "author": "johnWilshire <john.h.wilshire@gmail.com>",
@@ -8,6 +8,7 @@
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
     "start": "npm run dev",
     "build": "node build/build.js",
+    "device": "cordova run android --device",
     "build:watch": "cross-env WEBPACK_WATCH=true node build/build.js",
     "lint": "eslint --ext .js,.vue src"
   },

@@ -1,7 +1,7 @@
 # Quadrat
 
-**Quadrat** is an open source app to help ecologists acurately measure the 
-fractional cover of their quadrat. 
+**Quadrat** is an open source app to help ecologists accurately measure the 
+fractional cover of their quadrat.
 
 Estimating species cover in a quadrat can be tricky, many ecologists eyeball it but this is a major source of systematic error when estimating cover.
 

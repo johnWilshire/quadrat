@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="io.cordova.helloworld" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <name>Quadrat: Cover Estimator</name>
+<widget id="io.cordova.quadrat" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name short="Quadrat">Quadrat: Cover Estimator</name>
     <description>
 Quadrat is an open source cordova app to help ecologists acurately measure the 
 fractional cover of their quadrat. 

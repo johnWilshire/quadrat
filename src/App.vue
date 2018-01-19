@@ -2,15 +2,16 @@
 v-ons-page
   v-ons-toolbar
     .center Quadrat: Cover Estimator
-  v-ons-fab.cam(position='bottom left')
-    v-ons-icon(icon='md-camera', @click='snapPicture')
-  v-ons-speed-dial(position='bottom right', direction='up')
-    v-ons-fab(@click="drawing=!drawing" :class="{drawing : drawing}")
-      v-ons-icon(icon='md-edit')
-    v-ons-speed-dial-item
-      v-ons-icon(icon='md-delete' @click="clear")
-    v-ons-speed-dial-item
-      v-ons-icon(icon='md-undo' @click="undo")
+  div
+    v-ons-fab.cam(position='bottom left')
+      v-ons-icon(icon='md-camera', @click='snapPicture')
+    v-ons-speed-dial(position='bottom right', direction='up')
+      v-ons-fab(@click="drawing=!drawing" :class="{drawing : drawing}")
+        v-ons-icon(icon='md-edit')
+      v-ons-speed-dial-item
+        v-ons-icon(icon='md-delete' @click="clear")
+      v-ons-speed-dial-item
+        v-ons-icon(icon='md-undo' @click="undo")
   canvas(ref="myCanvas")
   v-ons-list
     v-ons-list-item 
@@ -20,24 +21,34 @@ v-ons-page
         v-ons-button(@click="updateCoverage") Estimate Coverage!
     v-ons-list-item Brush Size
       v-ons-range.brush(v-model="brush" style="width: 100%;")
+    v-ons-list-item
+      v-ons-col
+        v-ons-button(@click="debug = !debug") Debug
+      v-ons-col
+        p Debug: {{ debug }}
+  code(v-if="debug") {{ debugMessage }}
+    
 </template>
 <script>
 import Vue from 'vue'
 import { fabric } from 'fabric-browseronly'
 const selectionFill = 'rgba(255, 255, 255, 0.25)'
+// the brush's stroke color
 const r = 0
 const g = 118
 const b = 255
 const drawFill = `rgb(${r},${g},${b})`
 export default {
   mounted () {
-    this.$refs.myCanvas.width = this.width
-    this.$refs.myCanvas.height = this.height
+    this.$refs.myCanvas.width = this.position.width
+    this.$refs.myCanvas.height = this.position.height
     this.canvas = new fabric.Canvas(this.$refs.myCanvas)
     this.canvas.isDrawingMode = this.drawing
     this.canvas.freeDrawingBrush.color = drawFill
-
     this.initSelection()
+    // set zooms
+    this.position.zoomX = this.selection.zoomX
+    this.position.zoomY = this.selection.zoomY
     this.updateBackground()
     this.updateBrushWidth()
   },
@@ -49,9 +60,14 @@ export default {
       coverage: 0,
       drawing: false,
       brush: 50,
-      debug: true,
-      width: window.innerWidth,
-      height: window.innerHeight / 2
+      debug: false,
+      debugMessage: '',
+      position: {
+        width: window.innerWidth,
+        height: window.innerHeight / 2,
+        zoomX: 0,
+        zoomY: 0
+      }
     }
   },
   watch: {
@@ -64,10 +80,10 @@ export default {
     initSelection () {
       var margin = 5
       this.selection = new fabric.Rect({
-        left: this.height / (margin * 2),
-        top: this.width / (margin * 2),
-        width: this.width * (margin - 1) / margin,
-        height: this.height * (margin - 1) / margin,
+        left: this.position.height / (margin * 2),
+        top: this.position.width / (margin * 2),
+        width: this.position.width * (margin - 1) / margin,
+        height: this.position.height * (margin - 1) / margin,
         fill: selectionFill,
         stroke: 'white'
       })
@@ -99,12 +115,18 @@ export default {
       })
     },
     selectionPosition () {
-      // for some reason we have t =o multiply this by 2
+      var round = Math.round
+      var zoomX = this.position.zoomX
+      var zoomY = this.position.zoomY
+      var w = this.selection.getWidth() * zoomX
+      var h = this.selection.getHeight() * zoomY
+      var t = this.selection.top * zoomY
+      var l = this.selection.left * zoomX
       var pos = {
-        left: Math.round(this.selection.left) * 2,
-        top: Math.round(this.selection.top) * 2,
-        width: Math.round(this.selection.getWidth()) * 2,
-        height: Math.round(this.selection.getHeight()) * 2
+        left: round(l),
+        top: round(t),
+        width: round(w),
+        height: round(h)
       }
       return pos
     },
@@ -116,7 +138,7 @@ export default {
       )
       return imgData
     },
-    calculateCoverage (context, name) {
+    calculateCoverage (context) {
       this.canvas.sendToBack(this.selection)
       var imageData = this.coverageArray(context)
       var array = imageData.data
@@ -126,19 +148,26 @@ export default {
         var green = array[i + 1]
         var blue = array[i + 2]
         // the pen is black so we look for pixels that are black
-        // note this is pretty hacky and not robust but pixels are rarely all pure black so w.e
+        // note this is pretty hacky and not robust but pixels are very very rarely
+        // going to be all the one we haveas the brush so w.e
         if (red === r && blue === b && green === g) {
           total++
         }
       }
 
       if (this.debug) context.putImageData(imageData, 0, 0)
-
+      if (this.debug) {
+        this.debugMessage = JSON.stringify({
+          zoomX: this.selection.zoomX,
+          zoomY: this.selection.zoomY,
+          selectionPosition: this.selectionPosition()
+        }, null, 2)
+      }
       var percent = (total / (array.length / 4) * 100).toFixed(1)
       this.coverage = percent
     },
     updateCoverage () {
-      this.calculateCoverage(this.canvas.contextContainer, 'container')
+      this.calculateCoverage(this.canvas.contextContainer)
     },
     undo () {
       var objs = this.canvas.getObjects()
